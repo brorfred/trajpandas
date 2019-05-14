@@ -10,8 +10,11 @@ import pandas as pd
 from scipy.interpolate import interpn
 
 from trajpandas.io.trm import read_bin as read_trm
+from trajpandas.utils.grid import heatmat
 
 from pandas import *
+
+
 
 
 @pd.api.extensions.register_dataframe_accessor("traj")
@@ -48,11 +51,16 @@ class TrajAccessor(object):
         self._obj["age"] = self._obj.groupby("id")["_index_time"].transform(age)
         del self._obj["_index_time"]
 
-    def add_delta(self, rowname, Dxy=False):
+    def add_delta(self, rowname=None, Dxy=False):
         """Calculate DChl from traj dataframe"""
         #if rowname not in self._obj.keys():
         #    raise KeyError(f"The row '{rowname}' is not in the Dataframe")
-        rowlist = ["time", rowname] if type(rowname)==str else ["time",]+rowname
+        if type(rowname)==str:
+            rowlist = ["time", rowname]
+        elif type(rowname) is None:
+            rowlist = ["time",]
+        else:
+            rowlist = ["time",]+rowname
         self._obj["time"] = self._obj.index
         if Dxy:
             rowlist += ["xpos", "ypos"]
@@ -156,11 +164,12 @@ def filter_by_len(df, traj_minlen=-np.inf, traj_maxlen=np.inf):
     gr = gr.groupby("id").filter(lambda x: len(x) <= traj_maxlen)
     return gr
 
-def interpolate(df, dt="1h", method="cubic", traj_minlen=7):
+def interpolate(df, dt="1h", method="cubic", traj_minlen=7, limit=12):
     """Interpolate each trajectory to dt distances"""
     gr = filter_by_len(df, traj_minlen=traj_minlen)
     dd = gr.groupby("id").apply(
-        lambda grp: grp.resample(dt).interpolate(method=method))
+        lambda grp: grp.resample(dt).interpolate(method=method, limit=limit))
     if hasattr(dd, "id"):
         del dd["id"] 
     return dd.reset_index(level=0)
+
