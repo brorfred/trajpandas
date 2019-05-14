@@ -14,6 +14,24 @@ def test_straight_line():
 def test_loop():
     df = synthetic.one_mile()
 
+def test_delta():
+    df = synthetic.straight_line()
+    
+    df.traj.add_delta()
+    assert hasattr( df,"Dtime")
+    df.traj.add_delta(Dxy=True)
+    assert hasattr(df, "Dypos")
+    df.traj.add_delta("lat")
+    assert hasattr(df,"Dlat")
+    df.traj.add_delta(["lat","lon"])
+    assert hasattr(df, "Dlat")
+    assert hasattr(df, "Dlon")
+
+    ddf = df[df.id==df.id[0]]
+    assert ddf.lat[10] - ddf.lat[9] == ddf.Dlat[10]
+    assert ddf.lon[10] - ddf.lon[9] == ddf.Dlon[10]
+    assert ddf.index[10] - ddf.index[9] == ddf.Dtime[10]
+
     
 def test_interpolate():
     df = synthetic.loops()

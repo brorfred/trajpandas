@@ -57,7 +57,7 @@ class TrajAccessor(object):
         #    raise KeyError(f"The row '{rowname}' is not in the Dataframe")
         if type(rowname)==str:
             rowlist = ["time", rowname]
-        elif type(rowname) is None:
+        elif rowname is None:
             rowlist = ["time",]
         else:
             rowlist = ["time",]+rowname
@@ -68,7 +68,8 @@ class TrajAccessor(object):
             lambda x: x.diff())
         for fn in rowlist:
             self._obj[f"D{fn}"] = self._objd[fn]
-
+        del self._obj["time"]
+        
     #@need_grid_info
     def add_dist(self, cummulative=False):
         """Calculate distances along all positions along all trajs."""
