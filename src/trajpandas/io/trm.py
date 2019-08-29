@@ -22,4 +22,13 @@ def read_bin(filename, count=-1, keep_2D_zpos=False):
         del df["zpos"]
     df.sort_index(inplace=True)
     return df
-   
+
+def read_asc(filename, keep_2D_zpos=False):
+    """Read TRACMASS ascii file"""
+    df = pd.read_csv(filename, sep=" ", skipinitialspace=True, 
+		     names=["id","jd","xpos","ypos","zpos"], usecols=[0,1,2,3,4])
+    dt64 = ((df["jd"])*24*60*60-62135683200).astype("datetime64[s]")
+    df.set_index(dt64, inplace=True)
+    del df["jd"]
+    if (not keep_2D_zpos) and (len(df["zpos"].unique())==1):
+        del df["zpos"]
