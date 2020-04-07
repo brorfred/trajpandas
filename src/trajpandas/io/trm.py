@@ -1,12 +1,13 @@
 
 import os
 import glob
+import re
 from collections import OrderedDict as odict
 
 import numpy as np
 import pandas as pd
 
-def read_bin(filename, count=-1, keep_2D_zpos=False):
+def read_bin(filename, count=-1, keep_2D_zpos=False, part=True):
     """Read TRACMASS binary file"""
     dtype = np.dtype([('id',  'i4'), ('jd',  'f8'),
 		      ('xpos','f4'), ('ypos','f4'),
@@ -21,6 +22,16 @@ def read_bin(filename, count=-1, keep_2D_zpos=False):
     if (not keep_2D_zpos) and (len(df["zpos"].unique())==1):
         del df["zpos"]
     df.sort_index(inplace=True)
+    if part:
+        if type(part) is bool:
+            pstr = re.search(r'_r\d\d_', filename)
+            if not pstr:
+                return df
+            else:
+                part = int(pstr[0][2:-1])
+                print(part)    
+        df["id"] = df.id.astype(np.uint32,copy=False)
+        df["id"] = part * 10**(int(np.log10(np.uint32(-1)))-1) + df.id
     return df
 
 def read_asc(filename, keep_2D_zpos=False):
