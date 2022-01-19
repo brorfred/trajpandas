@@ -14,9 +14,6 @@ from trajpandas.utils.grid import heatmat
 
 from pandas import *
 
-
-
-
 @pd.api.extensions.register_dataframe_accessor("traj")
 class TrajAccessor(object):
     def __init__(self, pandas_obj):
@@ -27,8 +24,23 @@ class TrajAccessor(object):
             if not key in self._obj:
                 raise KeyError(f"The row '{key}' is missing.")
 
-    def setup_grid(self,latmat, lonmat):
-        """Provide infomation about the GCM grid used to advect particles"""
+    @property
+    def grid(self):
+        """Return a pyresample grid property."""
+        return self._grid
+
+    @grid.setter
+    def grid(self, grobj):
+        """Can you read this?"""
+        self._grid = grobj.setup_grid() if not hasattr(grobj, "lats") else grobj
+        self.jmt,self.imt = self._grid.shape
+        self.latmat = self._grid.lats
+        self.lonmat = self._grid.lons
+        self._obj.imax = self.imt
+        self._obj.jmax = self.jmt
+
+    def setup_grid(self, latmat, lonmat):
+        """Provide information about the GCM grid used to advect particles"""
         self.jmt,self.imt = latmat.shape
         self.latmat = latmat
         self.lonmat = lonmat
@@ -51,16 +63,16 @@ class TrajAccessor(object):
         self._obj["age"] = self._obj.groupby("id")["_index_time"].transform(age)
         del self._obj["_index_time"]
 
-    def add_delta(self, rowname=None, Dxy=False):
+    def add_delta(self, colname=None, Dxy=False):
         """Calculate DChl from traj dataframe"""
         #if rowname not in self._obj.keys():
         #    raise KeyError(f"The row '{rowname}' is not in the Dataframe")
-        if type(rowname)==str:
-            rowlist = ["time", rowname]
-        elif rowname is None:
+        if type(colname)==str:
+            rowlist = ["time", colname]
+        elif colname is None:
             rowlist = ["time",]
         else:
-            rowlist = ["time",]+rowname
+            rowlist = ["time",]+colname
         self._obj["time"] = self._obj.index
         if Dxy:
             rowlist += ["xpos", "ypos"]

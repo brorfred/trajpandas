@@ -38,3 +38,23 @@ def heatmat(df, imax=None, jmax=None):
             jmax = yint.max()+1
     ijvec = np.ravel_multi_index((xint,yint),(imax,jmax))
     return np.bincount(ijvec, minlength=imax*jmax).reshape(imax,jmax).T
+
+def trajs_to_grid(df, col_name, imax=None, jmax=None, data_source=None):
+    """Create a 2D heatmap showing densities of x-y combinations"""
+    xint = df.xpos.astype(np.int32)
+    yint = df.ypos.astype(np.int32)
+    if imax is None:
+        if hasattr(df, "imax"):
+            imax = df.imax
+        else:
+            imax = xint.max()+1
+    if jmax is None:
+        if hasattr(df, "jmax"):
+            jmax = df.jmax
+        else:
+            jmax = yint.max()+1
+    ijvec = np.ravel_multi_index((xint,yint),(imax,jmax))
+
+    sum = np.bincount(ijvec, weights=df[col_name], minlength=imax*jmax)
+    cnt = np.bincount(ijvec, minlength=imax*jmax)
+    return (sum/cnt).reshape(imax,jmax).T
